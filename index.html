@@ -1,0 +1,77 @@
+<html>
+
+<head>
+    <!-- Moralis SDK code -->
+    <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+    <script src="https://unpkg.com/moralis/dist/moralis.js"></script>
+</head>
+
+<body>
+    <h1>IPFS File Upload Demo</h1>
+
+    <button id="btn-login" onclick="login()">Login</button>
+    <br><br>
+    <input type="text" name="metadataName" id="metadataName" placeholder="name"><br>
+    <br><br>
+    <textarea name="metadataDescription" id="metadataDescription" cols="30" rows="10"></textarea>
+    <br>
+    <input type="file" name="fileInput" id="fileInput">
+    <br><br>
+    <button onclick="gogo()">Submit</button>
+
+    <script>
+        // connect to Moralis server
+
+        const serverUrl = process.process.env.MORALIS_SERVER_URL;
+        const appId = process.process.env.MORALIS_APP_ID;
+
+        Moralis.start({
+            serverUrl,
+            appId
+        });
+
+        //Login
+        login = async () => {
+            Moralis.Web3.authenticate().then(function (user) {
+                console.log('User Logged In');
+            });
+        };
+        login()
+
+        //Upload
+        uploadFile = async () => {
+            // Save file input to IPFS
+            const data = fileInput.files[0]
+            const file = new Moralis.File(data.name, data)
+            await file.saveIPFS();
+
+            console.log(file.ipfs(), file.hash())
+            return file.ipfs();
+        }
+        //Upload metadata obj -> name description image
+        uploadMetadata = async (imageUrl) => {
+            const name = document.getElementById('metadataName').value;
+            const description = document.getElementById('metadataDescription').value;
+
+            const metadata = {
+                "name" : name,
+                "description" : description,
+                "image": imageUrl
+            }
+            const file = new Moralis.File("file.json", {
+                base64: btoa(JSON.stringify(metadata))
+            });
+            await file.saveIPFS();
+
+            console.log(file.ipfs());
+        }
+
+        // func go go
+        gogo = async () => {
+            const image = await uploadFile();
+            await uploadMetadata(image);
+        }
+    </script>
+</body>
+
+</html>
